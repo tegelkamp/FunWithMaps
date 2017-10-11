@@ -29,6 +29,7 @@ my.routes <- expand.grid(from = adress.home
                          , stringsAsFactors = FALSE)
 
 #Fahrtzeit mit Auto und Verkehr
+#ToDo: Hinfahrt auf Ankunftszeit 9:00 umstellen!
 my.routes$morning<-
     sapply(1:length(my.routes$from),
           function(x) {google_distance(origins=my.routes$from[x]
