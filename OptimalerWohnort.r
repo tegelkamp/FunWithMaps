@@ -17,19 +17,21 @@ adress.work<-c("Ebhardtstraße 6, 30159 Hannover, Germany"
               ,"Venloer Str. 14, 50672 Köln, Germany")
 
 adress.home<-c("Bistritzer Str. 92, 50858 Köln, Germany"
-              , "Brandenburger Str. 13, 50668 Köln, Germany")
+              , "Brandenburger Str. 13, 50668 Köln, Germany"
+              , "Großer Wall 1, 33378 Rheda-Wiedenbrück"
+              , "Bothmerstr. 1, 30519 Hannover")
 
 
 adress.station<-list(c("50.938158,6.845206"),
                      c("Bahnhof Köln Lövenich"),
                      c("Köln Hauptbahnhof, Germany"))
 
+rm(my.routes) 
 my.routes <- expand.grid(from = adress.home
                          , to = adress.work
                          , stringsAsFactors = FALSE)
 
 #Fahrtzeit mit Auto und Verkehr
-#ToDo: Hinfahrt auf Ankunftszeit 9:00 umstellen!
 my.routes$morning<-
     sapply(1:length(my.routes$from),
           function(x) {google_distance(origins=my.routes$from[x]
@@ -53,6 +55,33 @@ my.routes$evening<-
                                       ,traffic_model = "pessimistic"
                                       ,simplify = TRUE)$rows$elements[[1]][3]$duration_in_traffic$value
          })
+
+#Taegliche Fahrtzeiten errechnen
+my.routes$by.car.minutes<-round((my.routes$morning
+                                 +my.routes$evening)/60,0)
+
+#Taegliche Fahrtzeiten je Wohnort aggregieren
+driving.times<-aggregate(my.routes$by.car.minutes
+               , by=list(from=my.routes$from), FUN=sum)
+
+#Grenzen fuer die Darstellung in der Karte ermitteln
+map.bounds<-sapply(1:length(adress.work)
+                   , function(x) {google_geocode(adress.work[x]
+                                    , key=my.apikey)$results$geometry$location})
+
+
+
+map <- get_map(location = c(lon = mean(unlist(map.bounds['lng',1:2]))
+                            , lat = mean(unlist(map.bounds['lat',1:2])))
+               , zoom = 8,
+               source = "google")
+ggmap(map)+geom_leg(route)
+
+route<-google_directions(origin = adress.work[1], destination = adress.work[2], key=my.apikey)
+
+
+
+qmap(driving.times$from[1])
 
 #Laufzeit zum Bahnhof
 mapdist(from=adress.home
