@@ -75,10 +75,9 @@ map <- get_map(location = c(lon = mean(unlist(map.bounds['lng',1:2]))
                             , lat = mean(unlist(map.bounds['lat',1:2])))
                , zoom = 8,
                source = "google")
-ggmap(map)+geom_leg(route)
 
 route<-google_directions(origin = adress.work[1], destination = adress.work[2], key=my.apikey)
-
+ggmap(map)+geom_leg(route)
 
 
 qmap(driving.times$from[1])
