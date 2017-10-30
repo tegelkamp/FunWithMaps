@@ -19,7 +19,10 @@ adress.work<-c("Ebhardtstraße 6, 30159 Hannover, Germany"
 adress.home<-c("Bistritzer Str. 92, 50858 Köln, Germany"
               , "Brandenburger Str. 13, 50668 Köln, Germany"
               , "Großer Wall 1, 33378 Rheda-Wiedenbrück"
-              , "Bothmerstr. 1, 30519 Hannover")
+              , "Bothmerstr. 1, 30519 Hannover"
+              , "Harkortstr. 17-13, 59423 Unna"
+              , "Meerbrede 17, 32107 Bad Salzuflen"
+              , "Moorhoffstraße 2-10, 30419 Hannover")
 
 
 adress.station<-list(c("50.938158,6.845206"),
@@ -64,20 +67,46 @@ my.routes$by.car.minutes<-round((my.routes$morning
 driving.times<-aggregate(my.routes$by.car.minutes
                , by=list(from=my.routes$from), FUN=sum)
 
+adress.home.lat.long<-sapply(1:length(driving.times$from)
+                   , function(x) {google_geocode(driving.times$from[x]
+                                                 , key=my.apikey)$results$geometry$location})
+
+driving.times$lat<-unlist(adress.home.lat.long['lat',])
+driving.times$lng<-unlist(adress.home.lat.long['lng',])
+
 #Grenzen fuer die Darstellung in der Karte ermitteln
 map.bounds<-sapply(1:length(adress.work)
                    , function(x) {google_geocode(adress.work[x]
                                     , key=my.apikey)$results$geometry$location})
 
 
-
-map <- get_map(location = c(lon = mean(unlist(map.bounds['lng',1:2]))
+#Kartenmittelpunkt berechnen
+my.map <- get_map(location = c(lon = mean(unlist(map.bounds['lng',1:2]))
                             , lat = mean(unlist(map.bounds['lat',1:2])))
                , zoom = 8,
                source = "google")
 
-route<-google_directions(origin = adress.work[1], destination = adress.work[2], key=my.apikey)
-ggmap(map)+geom_leg(route)
+ggmap(my.map) + 
+  geom_point(aes(x=lng,y=lat, colour=x),
+             data=driving.times) + 
+  scale_color_gradient(low = "green", high="red")
+
+
+
+################################################################################
+################################################################################
+################################################################################
+#Routen anzeigen (aber eigentlich nicht notwendig....)
+my.directions<-route(from = adress.work[1], to = adress.work[2])
+
+ggmap(my.map) +
+  geom_leg(
+    aes(
+      x = startLon, xend = endLon,
+      y = startLat, yend = endLat
+    ),
+    data = my.directions, color = "red"
+  )
 
 
 qmap(driving.times$from[1])
