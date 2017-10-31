@@ -79,6 +79,11 @@ map.bounds<-sapply(1:length(adress.work)
                    , function(x) {google_geocode(adress.work[x]
                                     , key=my.apikey)$results$geometry$location})
 
+#Route zwischen den Arbeitsstätten berechnen
+my.directions<-google_directions(origin = adress.work[1], destination = adress.work[2], key=my.apikey)
+my.directions.lat.long<-decode_pl(my.directions[["routes"]]$overview_polyline$points)
+
+
 
 #Kartenmittelpunkt berechnen
 my.map <- get_map(location = c(lon = mean(unlist(map.bounds['lng',1:2]))
@@ -89,7 +94,8 @@ my.map <- get_map(location = c(lon = mean(unlist(map.bounds['lng',1:2]))
 ggmap(my.map) + 
   geom_point(aes(x=lng,y=lat, colour=x),
              data=driving.times) + 
-  scale_color_gradient(low = "green", high="red")
+  scale_color_gradient(low = "green", high="red") +
+  geom_line(aes(x=lon, y=lat), data=my.directions.lat.long)
 
 
 
@@ -108,6 +114,12 @@ ggmap(my.map) +
     data = my.directions, color = "red"
   )
 
+
+
+my.directions<-google_directions(origin = adress.work[1], destination = adress.work[2], key=my.apikey)
+decode_pl(my.directions[["routes"]]$overview_polyline$points)
+
+my.directions[["routes"]]$overview_polyline$points
 
 qmap(driving.times$from[1])
 
